@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ip-test-task</string>
+    <string name="Product_list">Список товаров</string>
+    <string name="Search_products">Поиск товаров</string>
+    <string name="In_stock">На складе</string>
+    <string name="Date_added">Дата добавления</string>
+</resources>
