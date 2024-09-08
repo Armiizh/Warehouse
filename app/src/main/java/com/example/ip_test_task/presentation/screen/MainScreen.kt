@@ -36,6 +36,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,46 +54,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import com.example.ip_test_task.R
 import com.example.ip_test_task.data.model.Item
+import com.example.ip_test_task.domain.MainViewModel
+import kotlinx.coroutines.launch
 import java.sql.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(viewModel: MainViewModel) {
 
+    val items by viewModel.items.collectAsState(initial = emptyList())
     var search by remember { mutableStateOf("") }
-    val items = listOf(
-        Item(1, "iPhone 13", 1633046400000, listOf("Телефон", "Новый", "Распродажа"), 15),
-        Item(2, "Samsung Galaxy S21", 1633132800000, listOf("Телефон", "Хит"), 30),
-        Item(
-            3,
-            "PlayStation 5",
-            1633219200000,
-            listOf("Игровая приставка", "Акция", "Распродажа"),
-            7
-        ),
-        Item(4, "LG OLED TV", 1633305600000, listOf("Телевизор", "Эксклюзив", "Ограниченный"), 22),
-        Item(5, "Apple Watch Series 7", 1633392000000, listOf("Часы", "Новый", "Рекомендуем"), 0),
-        Item(6, "Xiaomi Mi 11", 1633478400000, listOf("Телефон", "Скидка", "Распродажа"), 5),
-        Item(7, "MacBook Air M1", 1633564800000, listOf("Ноутбук", "Тренд"), 12),
-        Item(
-            8,
-            "Amazon Kindle Paperwhite",
-            1633651200000,
-            listOf("Электронная книга", "Последний шанс", "Ограниченный"),
-            18
-        ),
-        Item(9, "Fitbit Charge 5", 1633737600000, emptyList(), 27),
-        Item(10, "GoPro Hero 10", 1633824000000, listOf("Камера", "Эксклюзив"), 25)
-    )
-    val filteredItems = remember(search) {
-        items.filter { item ->
-            item.name.contains(search, ignoreCase = true)
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -153,8 +130,10 @@ fun MainScreen() {
                     )
                 )
                 LazyColumn {
-                    items(filteredItems) { item ->
-                        ItemRow(item = item)
+                    items(items.filter { item ->
+                        item.name.contains(search, ignoreCase = true)
+                    }) { item ->
+                        ItemRow(item, viewModel)
                     }
                 }
             }
@@ -165,10 +144,17 @@ fun MainScreen() {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ItemRow(item: Item) {
+fun ItemRow(item: Item, viewModel: MainViewModel) {
     val formatedDate = item.time.toFormattedDate()
     var editShowDialog by remember { mutableStateOf(false) }
     var deleteShowDialog by remember { mutableStateOf(false) }
+    var refreshList by remember { mutableStateOf(false) }
+    LaunchedEffect(!editShowDialog || !deleteShowDialog) {
+        if (refreshList) {
+            viewModel.refreshItems()
+            refreshList = false
+        }
+    }
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -221,19 +207,20 @@ fun ItemRow(item: Item) {
                         tint = colorResource(id = R.color.delete)
                     )
                 }
-
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    content = {
-                        item.tags.forEach { tag ->
-                            CustomChip(text = tag)
+                if (item.tags.isNotEmpty()) {
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        content = {
+                            item.tags.forEach { tag ->
+                                CustomChip(text = tag)
+                            }
                         }
-                    }
-                )
+                    )
+                }
 
                 Row(
                     modifier = Modifier
@@ -272,6 +259,7 @@ fun ItemRow(item: Item) {
                 }
             }
             if (editShowDialog) {
+                var newAmount by remember { mutableStateOf("") }
                 AlertDialog(
                     onDismissRequest = { editShowDialog = false },
                     title = {
@@ -337,7 +325,10 @@ fun ItemRow(item: Item) {
                     },
                     confirmButton = {
                         TextButton(
-                            onClick = { editShowDialog = false }
+                            onClick = {
+                                refreshList = true
+                                editShowDialog = false
+                            }
                         ) {
                             Text(
                                 text = stringResource(R.string.Confirm),
@@ -384,7 +375,12 @@ fun ItemRow(item: Item) {
                     },
                     confirmButton = {
                         TextButton(
-                            onClick = { deleteShowDialog = false }
+                            onClick = {
+                                viewModel.viewModelScope.launch {
+                                    viewModel.deleteItem(item.id!!)
+                                }
+                                refreshList = true
+                                deleteShowDialog = false }
                         ) {
                             Text(
                                 text = stringResource(R.string.Yes),

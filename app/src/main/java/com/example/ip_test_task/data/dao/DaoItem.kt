@@ -2,6 +2,8 @@ package com.example.ip_test_task.data.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.ip_test_task.data.model.Item
@@ -11,14 +13,20 @@ import kotlinx.coroutines.flow.Flow
 interface DaoItem {
 
     @Query("SELECT * FROM items")
-    fun getAllItems(): Flow<List<Item>>
+    fun getAllItemsFlow(): Flow<List<Item>>
+    
+    @Query("SELECT * FROM items")
+    suspend fun getAllItems(): List<Item>
 
-    @Query("SELECT * FROM items WHERE id = :id")
-    fun getItemById(id: Int): Flow<Item>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllItems(items: List<Item>)
 
-    @Delete
-    suspend fun delete(item: Item)
+    @Insert
+    suspend fun insertItem(item: Item)
 
-    @Update
-    suspend fun update(item: Item)
+    @Query("UPDATE items SET amount = :newAmount WHERE id = :id")
+    suspend fun updateById(id: Int, newAmount: Int)
+
+    @Query("DELETE FROM items WHERE id = :id")
+    suspend fun deleteById(id: Int): Int
 }
