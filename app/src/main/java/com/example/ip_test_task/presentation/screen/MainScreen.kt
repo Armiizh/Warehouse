@@ -259,7 +259,7 @@ fun ItemRow(item: Item, viewModel: MainViewModel) {
                 }
             }
             if (editShowDialog) {
-                var newAmount by remember { mutableStateOf("") }
+                var newAmount by remember { mutableStateOf(item.amount.toString()) }
                 AlertDialog(
                     onDismissRequest = { editShowDialog = false },
                     title = {
@@ -286,7 +286,11 @@ fun ItemRow(item: Item, viewModel: MainViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             IconButton(
-                                onClick = { /*TODO*/ }
+                                onClick = {
+                                    if (newAmount.toInt() > 0) {
+                                        newAmount = (newAmount.toInt() - 1).toString()
+                                    }
+                                }
                             ) {
                                 Icon(
                                     modifier = Modifier.size(40.dp),
@@ -297,11 +301,13 @@ fun ItemRow(item: Item, viewModel: MainViewModel) {
                             }
                             Text(
                                 modifier = Modifier.padding(horizontal = 22.dp),
-                                text = "${item.amount}",
+                                text = newAmount,
                                 fontSize = 20.sp
                             )
                             IconButton(
-                                onClick = { /*TODO*/ }
+                                onClick = {
+                                    newAmount = (newAmount.toInt() + 1).toString()
+                                }
                             ) {
                                 Icon(
                                     modifier = Modifier.size(40.dp),
@@ -326,6 +332,9 @@ fun ItemRow(item: Item, viewModel: MainViewModel) {
                     confirmButton = {
                         TextButton(
                             onClick = {
+                                viewModel.viewModelScope.launch {
+                                    viewModel.updateItemAmountById(item.id!!, newAmount.toInt())
+                                }
                                 refreshList = true
                                 editShowDialog = false
                             }
