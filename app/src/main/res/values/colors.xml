@@ -12,4 +12,6 @@
     <color name="delete">#cc4100</color>
     <color name="scaffoldConteiner">#f5f4f5</color>
     <color name="focusedBorder">#445e91</color>
+    <color name="editBtn">#445e91</color>
+    <color name="AlertIcon">#575e71</color>
 </resources>

@@ -4,4 +4,11 @@
     <string name="Search_products">Поиск товаров</string>
     <string name="In_stock">На складе</string>
     <string name="Date_added">Дата добавления</string>
+    <string name="Product_quantity">Количество товара</string>
+    <string name="Cancel">Отмена</string>
+    <string name="Confirm">Принять</string>
+    <string name="Delete_product">Удаление товара</string>
+    <string name="Confirm_delete">Вы действительно хотите удалить выбранный товар?</string>
+    <string name="No">Нет</string>
+    <string name="Yes">Да</string>
 </resources>

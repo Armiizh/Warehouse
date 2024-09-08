@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,7 +81,8 @@ fun MainScreen() {
             8,
             "Amazon Kindle Paperwhite",
             1633651200000,
-            listOf("Электронная книга", "Последний шанс", "Ограниченный"), 18
+            listOf("Электронная книга", "Последний шанс", "Ограниченный"),
+            18
         ),
         Item(9, "Fitbit Charge 5", 1633737600000, emptyList(), 27),
         Item(10, "GoPro Hero 10", 1633824000000, listOf("Камера", "Эксклюзив"), 25)
@@ -160,6 +167,8 @@ fun MainScreen() {
 @Composable
 fun ItemRow(item: Item) {
     val formatedDate = item.time.toFormattedDate()
+    var editShowDialog by remember { mutableStateOf(false) }
+    var deleteShowDialog by remember { mutableStateOf(false) }
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -171,100 +180,225 @@ fun ItemRow(item: Item) {
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
         ),
-
-        ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp)
-        ) {
-            Row(
+        content = {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp)
             ) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(0.7f),
-                    text = item.name,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    fontSize = 24.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(
+                Row(
                     modifier = Modifier
-                        .clickable { }
-                        .weight(1f),
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit",
-                    tint = colorResource(id = R.color.edit)
-                )
-                Icon(
-                    modifier = Modifier
-                        .padding(start = 12.dp)
-                        .clickable { }
-                        .weight(1f),
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = colorResource(id = R.color.delete)
-                )
-            }
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(0.7f),
+                        text = item.name,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        fontSize = 24.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        modifier = Modifier
+                            .clickable { editShowDialog = true }
+                            .weight(1f),
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = colorResource(id = R.color.edit)
+                    )
+                    Icon(
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                            .clickable { deleteShowDialog = true }
+                            .weight(1f),
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = colorResource(id = R.color.delete)
+                    )
+                }
 
-            FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                content = {
-                    item.tags.forEach { tag ->
-                        CustomChip(text = tag)
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    content = {
+                        item.tags.forEach { tag ->
+                            CustomChip(text = tag)
+                        }
+                    }
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(
+                        modifier = Modifier.weight(0.5f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.In_stock),
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = "${item.amount}",
+                            color = Color.Black
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.weight(0.5f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.Date_added),
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = formatedDate,
+                            color = Color.Black
+                        )
                     }
                 }
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
-                    modifier = Modifier.weight(0.5f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.In_stock),
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = "${item.amount}",
-                        color = Color.Black
-                    )
-                }
-                Column(
-                    modifier = Modifier.weight(0.5f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.Date_added),
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = formatedDate,
-                        color = Color.Black
-                    )
-                }
+            }
+            if (editShowDialog) {
+                AlertDialog(
+                    onDismissRequest = { editShowDialog = false },
+                    title = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "EditAlert",
+                                tint = colorResource(id = R.color.AlertIcon)
+                            )
+                            Text(
+                                modifier = Modifier.padding(top = 12.dp),
+                                text = stringResource(R.string.Product_quantity)
+                            )
+                        }
+                    },
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = { /*TODO*/ }
+                            ) {
+                                Icon(
+                                    modifier = Modifier.size(40.dp),
+                                    painter = painterResource(id = R.drawable.ic_reduce_quantity),
+                                    contentDescription = "reduce_btn",
+                                    tint = colorResource(id = R.color.editBtn)
+                                )
+                            }
+                            Text(
+                                modifier = Modifier.padding(horizontal = 22.dp),
+                                text = "${item.amount}",
+                                fontSize = 20.sp
+                            )
+                            IconButton(
+                                onClick = { /*TODO*/ }
+                            ) {
+                                Icon(
+                                    modifier = Modifier.size(40.dp),
+                                    painter = painterResource(id = R.drawable.ic_increase_quantity),
+                                    contentDescription = "increase_btn",
+                                    tint = colorResource(id = R.color.editBtn)
+                                )
+                            }
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { editShowDialog = false }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.Cancel),
+                                color = colorResource(id = R.color.editBtn),
+                                fontSize = 14.sp
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = { editShowDialog = false }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.Confirm),
+                                color = colorResource(id = R.color.editBtn),
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                )
+            }
+            if (deleteShowDialog) {
+                AlertDialog(
+                    onDismissRequest = { deleteShowDialog = false },
+                    title = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "DeleteAlert",
+                                tint = colorResource(id = R.color.AlertIcon)
+                            )
+                            Text(
+                                modifier = Modifier.padding(top = 12.dp),
+                                text = stringResource(R.string.Delete_product)
+                            )
+                        }
+                    },
+                    text = {
+                        Text(text = stringResource(R.string.Confirm_delete))
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { deleteShowDialog = false }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.No),
+                                color = colorResource(id = R.color.editBtn),
+                                fontSize = 14.sp
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = { deleteShowDialog = false }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.Yes),
+                                color = colorResource(id = R.color.editBtn),
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                )
             }
         }
-    }
+    )
 }
+
 
 fun Long.toFormattedDate(): String {
     val date = Date(this)
@@ -272,17 +406,18 @@ fun Long.toFormattedDate(): String {
     return dateFormat.format(date)
 }
 
-/** Я так понял, что тут не используется,
+/** Я так понял, что тут не используется
  * AssistChip, из-за слишком большого
  * вертикального отступа между строками,
  * поэтому сделал свой chip, который повторяет то,
  * что на предостваленном Вами скриншоте.
  **/
+
 @Composable
 fun CustomChip(
     text: String,
-    onClick: () -> Unit = {},
-    borderColor: Color = Color.Gray,
+    onClick: () -> Unit = { },
+    borderColor: Color = Color.Black,
     contentColor: Color = Color.Black
 ) {
     Text(
