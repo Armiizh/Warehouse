@@ -75,7 +75,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
-    implementation ("com.google.code.gson:gson:2.8.6")
+    implementation (libs.gson)
+    implementation ("androidx.sqlite:sqlite:2.4.0")
 }
 kapt {
     correctErrorTypes = true

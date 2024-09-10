@@ -4,17 +4,17 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "items")
+@Entity(tableName = "item")
 data class Item (
-    @PrimaryKey
-    @ColumnInfo("id")
-    val id: Int?,
     @ColumnInfo("name")
     val name: String,
+    @ColumnInfo("amount")
+    val amount: Int,
+    @PrimaryKey
+    @ColumnInfo("id")
+    val id: Int,
     @ColumnInfo("time")
     val time: Long,
     @ColumnInfo("tags")
-    val tags: List<String>,
-    @ColumnInfo("amount")
-    val amount: Int
+    val tags: List<String>
 )
